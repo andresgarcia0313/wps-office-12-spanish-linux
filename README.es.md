@@ -2,6 +2,8 @@
 
 Español | **[English](README.md)**
 
+> Explicación técnica detallada de cómo se tradujo cada capa (incluye la ingeniería inversa de QM y el fix de CEF/SRI): **[TECHNICAL.md](TECHNICAL.md)**
+
 Guía completa para instalar **WPS Office v12** (12.1.2.25882) en Linux basado en Debian/Ubuntu con la interfaz en **español**, incluyendo correcciones de crashes verificadas por la comunidad.
 
 > WPS Office v12 para Linux solo existe como build chino. El build internacional fue abandonado en v11. El botón de cambio de idioma fue **eliminado en v12**, así que la única forma de cambiar el idioma es el procedimiento manual documentado aquí.
