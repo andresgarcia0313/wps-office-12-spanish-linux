@@ -171,3 +171,20 @@ sudo ./launcher-es/install-launcher.sh
 ./settings-es/install-settings.sh
 rm -rf ~/.config/cef_user_data/Cache ~/.config/cef_user_data/GPUCache
 ```
+
+---
+
+## Addendum: kskincenter (appearance dialog) — why it resists translation
+
+The appearance settings sub-dialog (`addons/kskincenter/`) could NOT be translated. Two distinct techniques both broke it at runtime (dialog stops opening):
+
+1. **Edit bundle + recompute SRI** — failed.
+2. **Runtime injection** (inline `<script>` with vue-i18n `mergeLocaleMessage`, no bundle change) — also failed.
+
+Root cause: **the addon validates the integrity of its own `index.html`** (RSA signature comment + a SHA-512 in `run.ini` covering addon entry files). ANY change to `index.html` — recomputing an `integrity=` attribute OR injecting a script — alters its hash, so the addon loader rejects the webview and the dialog never opens.
+
+This is why `kweboptioncenter` worked (its HTML edit survived) but `kskincenter` does not: kskincenter has active HTML integrity verification. The bundle uses vue-i18n with **hashed keys** (`$t("4a09d95940")` → catalog `{"4a09d95940":"外观设置"}`), so the only safe text is catalog values — but you can't deliver them without touching `index.html`.
+
+**What we DID achieve safely:** the real bug there was a mistranslation — the "Clear" theme name showed as "Borrar" (the verb). Fixed via `wpsoffice.qm` (`editors-fix/fix-theme-names.py`) to "Claro (predeterminado)" / "Oscuro (beta)". The section titles (经典皮肤, 桌面图标) remain Chinese.
+
+**Verdict:** leave this dialog untranslated. Defeating the HTML integrity check would require finding and regenerating the RSA signature + run.ini SHA-512, which is fragile and re-locks on every update. Not worth it for a rarely-used screen. Revisit only if a clean injection vector that doesn't touch index.html is found (e.g. a CEF-level userscript, or if WPS exposes an addon hook).
