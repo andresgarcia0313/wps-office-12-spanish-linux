@@ -1,60 +1,29 @@
 #!/usr/bin/env python3
 """Generate es_ES/misc_linux.qm for WPS native Qt dialogs (libmisc_linux.so).
 
-These dialogs (window-mode switch, classic-interface switch, restart alerts)
-have NO es_ES QM, so they fall back to the English source strings hardcoded
-in the .so. This builds an es_ES QM keyed by Kingsoft's modified Qt hash
-elfHash(source + context). Verified: computed hashes match en_US/misc_linux.qm.
+Native dialogs (window-mode switch, classic-interface switch, restart/print
+alerts) have NO es_ES QM, so they fall back to English/Chinese source strings
+hardcoded in the .so. Qt looks up translations by hash = elfHash(source+context),
+so we only need the HASH, not the source string. We reuse the exact hashes from
+en_US/misc_linux.qm (same .so, same hashes) with Spanish translations.
 
-Safe by design: a wrong hash simply falls back to English (never breaks).
+Safe by design: a hash with no runtime match simply isn't used (English/Chinese
+fallback), never breaks anything.
+
+Build:   python3 gen-misc-linux-qm.py misc_linux.qm
 Install: sudo cp misc_linux.qm /opt/kingsoft/wps-office/office6/mui/es_ES/
 """
-import struct, sys
+import struct, sys, json, os
 
 MAGIC = bytes.fromhex("3cb86418caef9c95cd211cbf60a1bddd")
 T_HASHES, T_MESSAGES, TAG_END, TAG_TRANSLATION = 0x42, 0x69, 1, 3
 
-
-def elf_hash(data: bytes) -> int:
-    h = 0
-    for ch in data:
-        h = ((h << 4) + ch) & 0xFFFFFFFF
-        g = h & 0xF0000000
-        if g: h ^= g >> 24
-        h &= (~g) & 0xFFFFFFFF
-    return h or 1
-
-
-# context -> { source_string: spanish }
-DIALOGS = {
-    "KSwitchAllInOneDlg": {
-        "Switch window manage mode": "Cambiar modo de gestión de ventanas",
-        "All-in-One Mode": "Modo todo en uno",
-        "Support multi-window multi-label depart or group by free":
-            "Admite múltiples ventanas y pestañas, separadas o agrupadas libremente",
-        "Multi-Module Mode": "Modo multimódulo",
-        "Organize file label in different window filter by file type":
-            "Organiza las pestañas de archivos en ventanas distintas según el tipo",
-        "OK": "Aceptar",
-        "Doing this requires to restart %1, Please close all files in advance in case of data lose.":
-            "Esto requiere reiniciar %1. Cierre todos los archivos antes para evitar pérdida de datos.",
-        "Restart WPS to see changes": "Reinicie WPS para ver los cambios",
-        "This operation request restart WPS, Please close all the file in advance in case data lose":
-            "Esta operación requiere reiniciar WPS. Cierre todos los archivos antes para evitar pérdida de datos",
-    },
-    "KSwitchToClassicInterfaceDlg": {
-        "OK": "Aceptar",
-        "Cancel": "Cancelar",
-    },
-}
+MAP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "misc_linux_es_map.json")
 
 
 def build(out_path):
-    entries = []
-    for ctx, d in DIALOGS.items():
-        for src, es in d.items():
-            entries.append((elf_hash((src + ctx).encode("utf-8")), es))
-    entries.sort(key=lambda x: x[0])
+    es = {int(k): v for k, v in json.load(open(MAP, encoding="utf-8")).items()}
+    entries = sorted(es.items(), key=lambda x: x[0])
     msgs, hashes = b"", b""
     for h, tr in entries:
         off = len(msgs)
