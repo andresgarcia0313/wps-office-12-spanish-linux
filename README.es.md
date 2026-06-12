@@ -114,12 +114,34 @@ sudo ldconfig
 
 Abre WPS Writer y verifica que los menús estén en español (Inicio, Insertar, Diseño de página, Referencias, Revisar, Vista). Activa el corrector en **Revisar > Revisión ortográfica** y elige tu diccionario regional.
 
+## Bonus: traducción del launcher (exclusiva de este repo)
+
+La interfaz principal de WPS (lista de archivos, barra de búsqueda, acceso rápido, panel de cuenta) NO está cubierta por ningún paquete MUI comunitario -- sus strings viven en archivos QM de addons que Kingsoft solo distribuye en `zh_CN`, con los **textos fuente eliminados** (lookup solo por hash). Este repo incluye QMs en español para esos addons, producidos mediante ingeniería inversa del formato:
+
+```bash
+cd launcher-es
+sudo ./install-launcher.sh
+```
+
+Esto traduce **~3,700 strings del launcher**: barra de búsqueda, listas de archivos, menús contextuales, acceso rápido, diálogos de compartir, panel de cuenta. Los strings sin traducir caen a inglés (nunca a chino).
+
+### Cómo se hizo (herramientas incluidas en `tools/`)
+
+El Qt empaquetado de Kingsoft usa un **hash QM modificado**: `elfHash(source + context)` en vez del estándar `elfHash(source + comment)`, y elimina todos los textos fuente de los QM. El pipeline de `tools/` los recupera:
+
+1. `qm_tool.py parse` -- extrae las entradas `(hash -> chino)` del QM zh_CN
+2. `translate_addon.py` -- extrae los nombres de contexto del bloque Contexts del QM, saca strings candidatos del `.so` del addon con `strings`, y prueba `elfHash(candidato + contexto)` contra la tabla de hashes para recuperar los textos fuente en inglés (~90% de recuperación)
+3. Traducciones aplicadas desde `tools/translations_es.json` (memoria de traducción EN->ES con 3,000+ entradas)
+4. `qm_tool.py build` -- genera un QM solo-hash que WPS carga nativamente
+
+Para traducir otro addon (u otro idioma), ejecute `translate_addon.py <nombre_addon>`, complete el `*_pending.json` generado y construya.
+
 ## Limitaciones conocidas
 
-- **El launcher / página de inicio queda en inglés.** Al MUI es_ES le falta `prometheus_kso_res.rcc` (recursos de la UI Prometheus); solo en_US lo trae. Es un recurso Qt compilado -- no traducible por la comunidad.
-- **El webview de configuración central queda en chino.** Es HTML embebido dentro del build chino renderizado por CEF; los `.pak` de locale no lo afectan.
+- **Diálogos de apariencia/configuración parcialmente en chino.** Algunos diálogos vienen de otros addons o de HTML embebido en CEF; el contenido webview no es traducible vía QM.
 - **No hay botón de idioma.** Eliminado por Kingsoft en v12. Solo configuración por archivo.
-- **Las actualizaciones borran el MUI.** Tras cualquier actualización de WPS, repite los pasos 2, 3 y 6.
+- **Las actualizaciones borran el MUI.** Tras cualquier actualización de WPS, repite los pasos 2, 3, 6 y vuelve a ejecutar `launcher-es/install-launcher.sh`.
+- **Los QM del launcher son específicos del build.** Los hashes se calcularon contra WPS 12.1.2.25882. En otros builds, los strings que cambien caen a inglés.
 
 ## Errores comunes a evitar
 

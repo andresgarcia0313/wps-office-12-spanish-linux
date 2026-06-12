@@ -114,12 +114,34 @@ sudo ldconfig
 
 Open WPS Writer and verify the menus are in Spanish (Inicio, Insertar, Diseño de página, Referencias, Revisar, Vista). Enable the spell checker in **Revisar > Revisión ortográfica** and pick your regional dictionary.
 
+## Bonus: launcher translation (exclusive to this repo)
+
+The WPS home/launcher UI (file list, search bar, quick access, account panel) is NOT covered by any community MUI pack -- its strings live in addon QM files that Kingsoft ships only for `zh_CN`, with **source texts stripped** (hash-only lookup). This repo includes Spanish QMs for those addons, produced by reverse-engineering the format:
+
+```bash
+cd launcher-es
+sudo ./install-launcher.sh
+```
+
+This translates **~3,700 launcher strings**: search bar, file lists, context menus, quick access, sharing dialogs, account panel. Unmatched strings fall back to English (never Chinese).
+
+### How it was made (tools included in `tools/`)
+
+Kingsoft's bundled Qt uses a **modified QM hash**: `elfHash(source + context)` instead of the standard `elfHash(source + comment)`, and strips all source texts from the QM files. The pipeline in `tools/` recovers them:
+
+1. `qm_tool.py parse` -- extracts `(hash -> chinese)` entries from the zh_CN QM
+2. `translate_addon.py` -- extracts context names from the QM Contexts block, pulls candidate strings from the addon's `.so` with `strings`, and brute-forces `elfHash(candidate + context)` against the hash table to recover the English sources (~90% recovery rate)
+3. Translations applied from `tools/translations_es.json` (3,000+ entry EN->ES translation memory)
+4. `qm_tool.py build` -- emits a hash-only QM that WPS loads natively
+
+To translate another addon (or another language), run `translate_addon.py <addon_name>`, fill the generated `*_pending.json`, and build.
+
 ## Known limitations
 
-- **Launcher / start page stays in English.** The es_ES MUI lacks `prometheus_kso_res.rcc` (Prometheus UI resources); only en_US ships it. Compiled Qt resource -- not community-translatable.
-- **Settings center webview stays in Chinese.** It is embedded HTML inside the Chinese build rendered by CEF; locale `.pak` files do not affect it.
+- **Appearance/settings dialogs partially in Chinese.** Some dialogs come from other addons or embedded CEF HTML; the webview content is not translatable via QM.
 - **No language button.** Removed by Kingsoft in v12. Config-file-only.
-- **Updates wipe the MUI.** After any WPS update, repeat steps 2, 3 and 6.
+- **Updates wipe the MUI.** After any WPS update, repeat steps 2, 3, 6 and re-run `launcher-es/install-launcher.sh`.
+- **Launcher QMs are build-specific.** Hashes were computed against WPS 12.1.2.25882. On other builds, changed strings simply fall back to English.
 
 ## Common mistakes to avoid
 
