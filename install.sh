@@ -29,7 +29,13 @@ sudo cp -r /tmp/WPS_Office_12x_Es/mui/* "$WPS_DIR/mui/"
 sudo cp -r /tmp/WPS_Office_12x_Es/spellcheck/* "$WPS_DIR/dicts/spellcheck/"
 
 step "3/7 Installing language registry (lang_list.json)"
-wget -O /tmp/lang_list_community.json "$LANG_JSON_URL"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/lang_list_community.json" ]]; then
+    cp "$SCRIPT_DIR/lang_list_community.json" /tmp/lang_list_community.json
+    echo "  Using bundled lang_list_community.json"
+else
+    wget -O /tmp/lang_list_community.json "$LANG_JSON_URL"
+fi
 sudo mkdir -p "$WPS_DIR/mui/lang_list/"
 sudo cp /tmp/lang_list_community.json "$WPS_DIR/mui/lang_list/lang_list_community.json"
 sudo cp /tmp/lang_list_community.json "$WPS_DIR/mui/lang_list/lang_list.json"
