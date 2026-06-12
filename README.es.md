@@ -136,9 +136,27 @@ El Qt empaquetado de Kingsoft usa un **hash QM modificado**: `elfHash(source + c
 
 Para traducir otro addon (u otro idioma), ejecute `translate_addon.py <nombre_addon>`, complete el `*_pending.json` generado y construya.
 
+## Bonus 2: traducción del Centro de configuración (webview)
+
+El Centro de configuración (设置中心) es una webview Vue/CEF embebida, aparte de la UI Qt. Su HTML carga los bundles JS con hashes de **Subresource Integrity (SRI)** — al editar el JS cambia su hash, así que CEF *silenciosamente* se niega a ejecutarlo (pantalla blanca, sin error). Por eso ningún paquete comunitario lo traduce.
+
+La solución: editar el JS **y recomputar el hash SRI** en el HTML para que coincidan. `settings-es/install-settings.sh` lo hace automáticamente (traduce, recomputa SHA-384, reescribe `integrity=`, valida con `node --check`):
+
+```bash
+cd settings-es
+./install-settings.sh
+rm -rf ~/.config/cef_user_data/Cache ~/.config/cef_user_data/GPUCache  # limpiar cache CEF
+```
+
+**Diagnosticar fallos CEF/SRI** (técnica general para cualquier webview en blanco):
+```bash
+# Comparar el hash SRI declarado vs el hash real del archivo - si difieren, CEF lo bloquea:
+printf 'sha384-'; openssl dgst -sha384 -binary entry.js | openssl base64 -A
+grep -oP 'integrity="\Ksha384-[^"]*' index.html
+```
+
 ## Limitaciones conocidas
 
-- **Diálogos de apariencia/configuración parcialmente en chino.** Algunos diálogos vienen de otros addons o de HTML embebido en CEF; el contenido webview no es traducible vía QM.
 - **No hay botón de idioma.** Eliminado por Kingsoft en v12. Solo configuración por archivo.
 - **Las actualizaciones borran el MUI.** Tras cualquier actualización de WPS, repite los pasos 2, 3, 6 y vuelve a ejecutar `launcher-es/install-launcher.sh`.
 - **Los QM del launcher son específicos del build.** Los hashes se calcularon contra WPS 12.1.2.25882. En otros builds, los strings que cambien caen a inglés.
