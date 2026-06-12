@@ -36,10 +36,11 @@ DIALOGS = {
         "Organize file label in different window filter by file type":
             "Organiza las pestañas de archivos en ventanas distintas según el tipo",
         "OK": "Aceptar",
-        "Doing this requires to restart WPS, Please close all files in advance in case of data lose.":
-            "Esto requiere reiniciar WPS. Cierre todos los archivos antes para evitar pérdida de datos.",
-        "Doing this requires to restart WPS, Please close all files in advance in case of data lose":
-            "Esto requiere reiniciar WPS. Cierre todos los archivos antes para evitar pérdida de datos",
+        "Doing this requires to restart %1, Please close all files in advance in case of data lose.":
+            "Esto requiere reiniciar %1. Cierre todos los archivos antes para evitar pérdida de datos.",
+        "Restart WPS to see changes": "Reinicie WPS para ver los cambios",
+        "This operation request restart WPS, Please close all the file in advance in case data lose":
+            "Esta operación requiere reiniciar WPS. Cierre todos los archivos antes para evitar pérdida de datos",
     },
     "KSwitchToClassicInterfaceDlg": {
         "OK": "Aceptar",
