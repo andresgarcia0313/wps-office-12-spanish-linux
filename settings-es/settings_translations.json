@@ -89,5 +89,9 @@
  "快速了解多设备同步文档的好处": "Conozca las ventajas de sincronizar documentos entre dispositivos",
  "确认": "Confirmar",
  "经典界面采用多组件模式，会按文件类型以分窗口形式组织文档标签。由于切换界面需重启WPS，为避免数据丢失，请提前保存并关闭所有打开的文件。": "La interfaz clásica usa el modo multicomponente y organiza las pestañas de documentos por tipo de archivo. Como cambiar de interfaz requiere reiniciar WPS, guarde y cierre todos los archivos abiertos para evitar pérdida de datos.",
- "将无法使用 WPS Office 完整功能（此模式下需联网）。重启应用后生效，确认继续切换？": "No podrá usar todas las funciones de WPS Office (este modo requiere conexión). Surte efecto tras reiniciar. ¿Confirma el cambio?"
+ "将无法使用 WPS Office 完整功能（此模式下需联网）。重启应用后生效，确认继续切换？": "No podrá usar todas las funciones de WPS Office (este modo requiere conexión). Surte efecto tras reiniciar. ¿Confirma el cambio?",
+ "恢复默认设置": "Restaurar configuración predeterminada",
+ "确定要将所有组件的设置恢复到默认值吗？": "¿Seguro que desea restaurar la configuración de todos los componentes a sus valores predeterminados?",
+ "是(Y)": "Sí (S)",
+ "否(N)": "No (N)"
 }
