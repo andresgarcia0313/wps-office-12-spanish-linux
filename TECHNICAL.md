@@ -216,3 +216,35 @@ component/QM still shows English. For CEF panels, `--cef` flags which addon
 renders Chinese. To name the missing hashes back to English, cross-reference
 .kui `@`-strings (5,182 UI labels) and the .ts source corpus via
 elfHash(source+context).
+
+---
+
+## Template galleries (knewdocs) — protected, not translatable
+
+The "New" template galleries shown when opening a new Document/Sheet/Presentation/
+Smart-doc tab (我的模板/Mis plantillas, 本地模板/Plantillas locales, 空白表格/
+Hoja en blanco, etc.) are served by the `knewdocs` addon, with two variants:
+`res/personal/` (logged in) and `res/enterprise/` (no login).
+
+The bundles use **direct string literals** (not hashed $t keys, no logic
+comparisons) — so the JS itself is safe to translate. BUT `knewdocs/res/*/index.html`
+carries an **RSA signature comment + integrity validation**, exactly like
+kskincenter. Editing the JS forces recomputing the `integrity=` attribute, which
+changes the HTML hash, which fails the RSA/SHA check → the webview shows
+**"Loading" forever** (or blank). Both variants behave this way.
+
+**Verdict:** untranslatable without regenerating the RSA signature. Same frontier
+as kskincenter. Left in Chinese.
+
+### Decision rule: is a CEF webview translatable?
+
+| Signal | Translatable? |
+|--------|---------------|
+| HTML has no RSA comment, edit+SRI survives | YES (e.g. kweboptioncenter) |
+| HTML starts with `<!--<base64>-->` RSA signature, integrity validated | NO — "Loading"/blank (kskincenter, knewdocs) |
+
+Detect before editing:
+```bash
+head -c 60 addon/index.html | grep -oP '<!--[A-Za-z0-9+/]{15}'   # RSA signature present?
+```
+Prefer Qt QM translation (native dialogs) — never integrity-protected.
