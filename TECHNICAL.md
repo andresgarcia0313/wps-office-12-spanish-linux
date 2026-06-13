@@ -248,3 +248,28 @@ Detect before editing:
 head -c 60 addon/index.html | grep -oP '<!--[A-Za-z0-9+/]{15}'   # RSA signature present?
 ```
 Prefer Qt QM translation (native dialogs) — never integrity-protected.
+
+### Why knewdocs/kskincenter are cryptographically unbypassable (full investigation)
+
+Three independent paths were tested and all are blocked by design:
+
+1. **Edit webview JS + recompute SRI** → RSA-2048 signature (`<!--256-byte base64-->`)
+   over the whole HTML (including the `integrity=` attrs) fails. Verified by
+   `krt::kcodec::KRSAVerifyFile` in `libkrt.so`, gated by
+   `setMainResourceVerification(true)` compiled into `libknewdocs.so`. The signing
+   private key is Kingsoft's and is NOT on disk (the embedded RSA-2048 pubkey in
+   `libkdocerjsapilite.so` does not even match the live signature). Cannot re-sign.
+2. **Translate via backend Qt QM** → the gallery strings (我的模板, 本地模板,
+   空白文档) exist ONLY in the webview JS, not in any QM. No backend path.
+3. **Runtime CDP injection** (`--remote-debugging-port`) → WPS process dies on
+   launch; CEF remote debugging is blocked (anti-tampering).
+
+SRI itself is enforced by stock Chromium in `addons/cef/libcef.so` (not disableable
+per-resource). Removing the `integrity=` attribute is valid for CEF but still edits
+the HTML → still breaks the RSA signature.
+
+**Definitive verdict:** integrity-protected webviews (knewdocs template galleries,
+kskincenter appearance dialog) cannot be translated without Kingsoft's private
+signing key. This is cryptographic protection, not a tooling gap. Everything that
+routes through open mechanisms (Qt QM, unsigned webviews like kweboptioncenter) IS
+translated. Use `tools/coverage.py` to audit the rest.
