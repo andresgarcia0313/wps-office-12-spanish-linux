@@ -188,3 +188,31 @@ This is why `kweboptioncenter` worked (its HTML edit survived) but `kskincenter`
 **What we DID achieve safely:** the real bug there was a mistranslation — the "Clear" theme name showed as "Borrar" (the verb). Fixed via `wpsoffice.qm` (`editors-fix/fix-theme-names.py`) to "Claro (predeterminado)" / "Oscuro (beta)". The section titles (经典皮肤, 桌面图标) remain Chinese.
 
 **Verdict:** leave this dialog untranslated. Defeating the HTML integrity check would require finding and regenerating the RSA signature + run.ini SHA-512, which is fragile and re-locks on every update. Not worth it for a rarely-used screen. Revisit only if a clean injection vector that doesn't touch index.html is found (e.g. a CEF-level userscript, or if WPS exposes an addon hook).
+
+---
+
+## Autonomous coverage validation (tools/coverage.py)
+
+Finding untranslated screens by clicking is slow. `tools/coverage.py` reports
+coverage automatically by **QM hash-set diff**: each `en_US/*.qm` vs its
+`es_ES/*.qm`, counting hashes present in en_US but missing/empty in es_ES
+(the QMs are hash-only, `elfHash(source+context)`).
+
+```bash
+python3 tools/coverage.py            # full report (% translated, per-QM gaps)
+python3 tools/coverage.py --top 15   # worst 15 QMs
+python3 tools/coverage.py --cef      # scan CEF webview JS for hardcoded Chinese
+python3 tools/coverage.py --qm wps   # list untranslated hashes of one QM
+```
+
+Baseline (mmvill pack + our patches): **~81% translated, ~11,900 Qt strings
+untranslated**, concentrated in deep editor features (kso, wps, et, pdf) the
+user rarely sees. 5 QMs have no es_ES at all (e.g. kwpscopilot).
+
+**Why this is the right technique** (researched): the shipped QMs are
+source-less, so `lconvert`/`lupdate`/gettext can't diff them. The hash-set
+diff is pure-stdlib, runs headless in <1s, and pinpoints exactly which
+component/QM still shows English. For CEF panels, `--cef` flags which addon
+renders Chinese. To name the missing hashes back to English, cross-reference
+.kui `@`-strings (5,182 UI labels) and the .ts source corpus via
+elfHash(source+context).
